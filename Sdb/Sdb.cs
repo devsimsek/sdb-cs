@@ -5,22 +5,14 @@ using System.Text.Json;
 
 namespace Sdb
 {
-    /**
-     * Sdb, Flat database library.
-     * Copyright (C)devsimsek
-     * version: v1.0.2
-     * see: https://github.com/devsimsek/sdb-cs
-     */
+    /// Sdb, Flat database library.
+    /// Copyright (C)devsimsek
+    /// version: v1.0.3
+    /// see: https:///github.com/devsimsek/sdb-cs
     struct DatabaseObject
     {
         public string File;
         public string Path;
-    }
-
-    struct ParseJson
-    {
-        public object Field { get; set; }
-        public object Value { get; set; }
     }
 
     public class Database
@@ -30,10 +22,10 @@ namespace Sdb
         private DatabaseObject _dbp;
         private static Dictionary<string, object> _db;
 
-        // <summary>Connect to database</summary>
-        // <param>file: The file that sdb will connect</param>
-        // <param>directory: The directory that sdb will look for database.</param>
-        // <param>force: Force creation. If true database file will be forcefully created.</param>
+        /// <summary>Connect to database</summary>
+        /// <param>file: The file that sdb will connect</param>
+        /// <param>directory: The directory that sdb will look for database.</param>
+        /// <param>force: Force creation. If true database file will be forcefully created.</param>
         public void Connect(string file, string directory = null, bool debug = false, bool force = false)
         {
             debugMode = debug;
@@ -55,9 +47,9 @@ namespace Sdb
             };
         }
 
-        // <summary>Create field</summary>
-        // <param>field: The field of variable</param>
-        // <param>value: The value inserted in field.</param>
+        /// <summary>Create field</summary>
+        /// <param>field: The field of variable</param>
+        /// <param>value: The value inserted in field.</param>
         public void Create(string field, object value = null)
         {
             if (!_db.ContainsKey(field))
@@ -66,30 +58,30 @@ namespace Sdb
             }
         }
 
-        // <summary>Read field</summary>
-        // <param>field: The field of variable</param>
+        /// <summary>Read field</summary>
+        /// <param>field: The field of variable</param>
         public object Read(string field = null)
         {
             if (field == null) return _db;
             return _db[field];
         }
 
-        // <summary>Update field</summary>
-        // <param>field: The field of variable</param>
-        // <param>value: The value inserted in field.</param>
+        /// <summary>Update field</summary>
+        /// <param>field: The field of variable</param>
+        /// <param>value: The value inserted in field.</param>
         public void Update(string field, object value)
         {
             _db[field] = value;
         }
 
-        // <summary>Delete field</summary>
-        // <param>field: The field of variable</param>
+        /// <summary>Delete field</summary>
+        /// <param>field: The field of variable</param>
         public bool Delete(string field)
         {
             return _db.Remove(field);
         }
 
-        // <summary>Save database</summary>
+        /// <summary>Save changes to database</summary>
         public void Save()
         {
             var o = JsonSerializer.Serialize(_db);
