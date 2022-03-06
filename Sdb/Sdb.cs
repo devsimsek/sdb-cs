@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace Sdb
 {
     /**
      * Sdb, Flat database library.
      * Copyright (C)devsimsek
-     * version: v1.0
+     * version: v1.0.2
      * see: https://github.com/devsimsek/sdb-cs
      */
     struct DatabaseObject
@@ -25,22 +25,29 @@ namespace Sdb
 
     public class Database
     {
-        private bool debugMode = true;
+        private bool debugMode;
 
         private DatabaseObject _dbp;
-        private List<ParseJson> _db;
+        private static Dictionary<string, object> _db;
 
         // <summary>Connect to database</summary>
         // <param>file: The file that sdb will connect</param>
         // <param>directory: The directory that sdb will look for database.</param>
         // <param>force: Force creation. If true database file will be forcefully created.</param>
-        public void Connect(string file, string directory = null, bool force = false)
+        public void Connect(string file, string directory = null, bool debug = false, bool force = false)
         {
-            Debug($"Trying to connect {directory ?? ""}{file}.");
+            debugMode = debug;
+            Debug($"Trying to connect {(directory != null ? directory + "/" : "")}{file}.");
             var path = directory ?? Directory.GetCurrentDirectory();
             var read = OpenDatabaseFile(file, path, force);
-            _db = new List<ParseJson>(JsonConvert.DeserializeObject<ParseJson[]>(read) ??
-                                      Array.Empty<ParseJson>());
+
+            if (read != "{}")
+            {
+                _db = new Dictionary<string, object>(JsonSerializer.Deserialize<Dictionary<string, dynamic>>(read)!);
+            }
+            else
+                _db = new Dictionary<string, object>();
+
             _dbp = new DatabaseObject
             {
                 File = file,
@@ -51,55 +58,41 @@ namespace Sdb
         // <summary>Create field</summary>
         // <param>field: The field of variable</param>
         // <param>value: The value inserted in field.</param>
-        public void Create(object field, object value = null)
+        public void Create(string field, object value = null)
         {
-            if (_db.FindIndex(x => x.Field == field) == -1)
+            if (!_db.ContainsKey(field))
             {
-                _db.Add(new ParseJson() {Field = field, Value = value});
-            }
-            else
-            {
-                Debug("Field already exists.", "Warning", true);
+                _db[field] = value;
             }
         }
 
         // <summary>Read field</summary>
         // <param>field: The field of variable</param>
-        public object Read(object field = null)
+        public object Read(string field = null)
         {
             if (field == null) return _db;
-            var obj = _db.Find(obj => obj.Field == field);
-            return obj.Value;
+            return _db[field];
         }
 
         // <summary>Update field</summary>
         // <param>field: The field of variable</param>
         // <param>value: The value inserted in field.</param>
-        public void Update(object field, object value)
+        public void Update(string field, object value)
         {
-            var parseJson = _db.FindIndex(obj => obj.Field == field);
-            if (parseJson != -1)
-            {
-                _db[parseJson] = new ParseJson()
-                {
-                    Field = field,
-                    Value = value
-                };
-            }
+            _db[field] = value;
         }
 
         // <summary>Delete field</summary>
         // <param>field: The field of variable</param>
         public bool Delete(string field)
         {
-            var parseJson = _db.FindIndex(obj => (string) obj.Field == field);
-            return _db.Remove(_db[parseJson]);
+            return _db.Remove(field);
         }
 
         // <summary>Save database</summary>
         public void Save()
         {
-            var o = JsonConvert.SerializeObject(_db);
+            var o = JsonSerializer.Serialize(_db);
             using StreamWriter sw = File.CreateText($"{_dbp.Path}/{_dbp.File}");
             sw.WriteLine(o);
         }
@@ -114,7 +107,7 @@ namespace Sdb
                 {
                     Debug("Forcing to create new database file.");
                     using StreamWriter sw = File.CreateText($"{path}/{file}");
-                    sw.WriteLine("[]");
+                    sw.WriteLine("{}");
                 }
             }
 
@@ -136,7 +129,7 @@ namespace Sdb
             return output;
         }
 
-        private void Debug(string message, string flag = "Debug", bool force = false)
+        private void Debug(Object message, string flag = "Debug", bool force = false)
         {
             if (force) Console.WriteLine($"[{DateTime.Now}-{flag}]: {message}");
             if (debugMode) Console.WriteLine($"[{DateTime.Now}-{flag}]: {message}");
